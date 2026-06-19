@@ -27,6 +27,12 @@ You can open the right panes quickly:
 maclisten auth
 ```
 
+### Important: run from a terminal emulator app
+
+macOS TCC grants permissions to the **app bundle** that owns the terminal — e.g. `Terminal.app`, `iTerm.app`, `Warp.app`. If you run `maclisten` from a bare CLI process without a bundle (like `Kimi Code CLI`), the permission cannot be granted and `file`/`mic` will fail even after you click Allow.
+
+If you see the permission error after authorizing, launch `maclisten` from `Terminal.app` instead.
+
 ## Usage
 
 ```sh
