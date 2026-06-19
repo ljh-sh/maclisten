@@ -46,7 +46,7 @@ class AsrCtrl {
         }
     }
 
-    func transcribeMicrophone(locale: String, onDevice: Bool, timeout: TimeInterval) async -> [String: Any] {
+    func transcribeMicrophone(locale: String, onDevice: Bool, timeout: TimeInterval, onPartial: ((String) -> Void)? = nil) async -> [String: Any] {
         let speechStatus = SFSpeechRecognizer.authorizationStatus()
         guard speechStatus == .authorized else {
             return ["ok": false, "error": authError("Speech Recognition", status: speechStatus)]
@@ -85,6 +85,7 @@ class AsrCtrl {
                     finalText = text
                 } else {
                     partialTexts.append(text)
+                    onPartial?(text)
                 }
             }
         }
