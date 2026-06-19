@@ -1,0 +1,33 @@
+import Foundation
+
+enum MaclistenRoot: Cmd {
+    static let meta = CmdMeta(
+        name: "maclisten",
+        desc: "macOS speech-to-text CLI — lightweight ASR",
+        subcmds: [
+            "file": FileCmd.self,
+            "mic": MicCmd.self,
+            "locales": LocalesCmd.self,
+        ],
+        run: { p in
+            guard let sub = p.arg(0) else {
+                printCmdHelp(MaclistenRoot.self)
+                return
+            }
+            var subArgs = p
+            if !subArgs.args.isEmpty {
+                subArgs.args.removeFirst()
+            }
+            switch sub {
+            case "file":
+                try await FileCmd.meta.run?(subArgs)
+            case "mic":
+                try await MicCmd.meta.run?(subArgs)
+            case "locales":
+                try await LocalesCmd.meta.run?(subArgs)
+            default:
+                cmdError("unknown subcommand: \(sub)")
+            }
+        }
+    )
+}

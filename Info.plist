@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleIdentifier</key>
+    <string>sh.ljh.maclisten</string>
+    <key>NSSpeechRecognitionUsageDescription</key>
+    <string>maclisten transcribes audio files and microphone input using macOS Speech recognition.</string>
+    <key>NSMicrophoneUsageDescription</key>
+    <string>maclisten captures microphone audio for real-time speech recognition.</string>
+</dict>
+</plist>
