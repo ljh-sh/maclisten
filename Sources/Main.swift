@@ -8,8 +8,8 @@ struct Entry {
     static func main() async {
         let args = Array(CommandLine.arguments.dropFirst())
 
-        // Help and locale-only commands do not need the app lifecycle.
-        if args.isEmpty || args.contains("--help") || args.contains("-h") || args.first == "locales" {
+        // Help, auth, and locale-only commands do not need the app lifecycle.
+        if args.isEmpty || args.contains("--help") || args.contains("-h") || args.first == "locales" || args.first == "auth" {
             do {
                 try await runCmd(MaclistenRoot.self, args)
             } catch {

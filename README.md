@@ -21,6 +21,12 @@ macOS does **not** reliably prompt CLI tools for Speech Recognition or Microphon
 
 Without these permissions, `maclisten` returns a clear JSON error instead of crashing.
 
+You can open the right panes quickly:
+
+```sh
+maclisten auth
+```
+
 ## Usage
 
 ```sh

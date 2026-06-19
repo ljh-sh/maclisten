@@ -1,4 +1,5 @@
 import Foundation
+import AppKit
 
 enum ListenCmd: Cmd {
     static let meta = CmdMeta(
@@ -65,6 +66,23 @@ enum LocalesCmd: Cmd {
         run: { p in
             let locales = AsrCtrl.supportedLocales()
             printJson(["ok": true, "count": locales.count, "locales": locales])
+        }
+    )
+}
+
+enum AuthCmd: Cmd {
+    static let meta = CmdMeta(
+        name: "auth",
+        desc: "Open System Settings to grant Speech Recognition / Microphone permissions",
+        run: { p in
+            let speechURL = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_SpeechRecognition")!
+            let micURL = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Microphone")!
+            NSWorkspace.shared.open(speechURL)
+            NSWorkspace.shared.open(micURL)
+            printJson([
+                "ok": true,
+                "message": "Opened System Settings. Grant Speech Recognition (and Microphone for 'mic') to your terminal, then run maclisten again."
+            ])
         }
     )
 }

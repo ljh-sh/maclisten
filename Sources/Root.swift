@@ -8,6 +8,7 @@ enum MaclistenRoot: Cmd {
             "file": FileCmd.self,
             "mic": MicCmd.self,
             "locales": LocalesCmd.self,
+            "auth": AuthCmd.self,
         ],
         run: { p in
             guard let sub = p.arg(0) else {
