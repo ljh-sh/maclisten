@@ -18,6 +18,7 @@ class MaclistenAppDelegate: NSObject, NSApplicationDelegate {
                 printJson(["ok": false, "error": error.localizedDescription])
             }
             completion()
+            exit(0)
         }
     }
 }

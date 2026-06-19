@@ -6,6 +6,7 @@ enum AsrError: Error {
     case notAuthorized
     case unavailable
     case noResult
+    case timeout
     case audioSetupFailed(String)
 }
 
@@ -21,40 +22,25 @@ class AsrCtrl {
             .sorted()
     }
 
-    func transcribeFile(url: URL, locale: String, onDevice: Bool) async -> [String: Any] {
+    func transcribeFile(url: URL, locale: String, onDevice: Bool, timeout: TimeInterval = 30) async -> [String: Any] {
         let status = SFSpeechRecognizer.authorizationStatus()
         guard status == .authorized else {
             return ["ok": false, "error": authError("Speech Recognition", status: status)]
         }
 
-        guard let recognizer = SFSpeechRecognizer(locale: Locale(identifier: locale)) else {
-            return ["ok": false, "error": "Locale '\(locale)' is not supported"]
-        }
-        guard recognizer.isAvailable else {
-            return ["ok": false, "error": "Speech recognizer is not available"]
-        }
-
-        let request = SFSpeechURLRecognitionRequest(url: url)
-        request.requiresOnDeviceRecognition = onDevice
-
         do {
-            let text = try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<String, Error>) in
-                recognizer.recognitionTask(with: request) { result, error in
-                    if let error = error {
-                        continuation.resume(throwing: error)
-                        return
-                    }
-                    if let result = result, result.isFinal {
-                        continuation.resume(returning: result.bestTranscription.formattedString)
-                    }
-                }
-            }
+            let session = FileRecognitionSession()
+            let text = try await session.recognize(url: url, locale: locale, onDevice: onDevice, timeout: timeout)
             return [
                 "ok": true,
                 "locale": locale,
                 "onDevice": onDevice,
                 "text": text,
             ]
+        } catch AsrError.unavailable {
+            return ["ok": false, "error": "Speech recognizer is not available for locale '\(locale)'"]
+        } catch AsrError.timeout {
+            return ["ok": false, "error": "Transcription timed out"]
         } catch {
             return ["ok": false, "error": error.localizedDescription]
         }
@@ -138,10 +124,25 @@ class AsrCtrl {
         audioEngine = nil
     }
 
+    private func withTimeout<T>(seconds: TimeInterval, operation: @escaping () async throws -> T) async throws -> T {
+        try await withThrowingTaskGroup(of: T.self) { group in
+            group.addTask {
+                try await operation()
+            }
+            group.addTask {
+                try await Task.sleep(nanoseconds: UInt64(seconds * 1_000_000_000))
+                throw AsrError.timeout
+            }
+            let result = try await group.next()!
+            group.cancelAll()
+            return result
+        }
+    }
+
     private func authError(_ name: String, status: AVAuthorizationStatus) -> String {
         switch status {
         case .notDetermined:
-            return "\(name) permission has not been granted. macOS does not reliably prompt CLI tools for \(name); please grant access to your terminal in System Settings > Privacy & Security > \(name)."
+            return "\(name) permission has not been granted. Run `maclisten auth` and grant access to your terminal in System Settings."
         case .denied:
             return "\(name) permission denied. Enable it in System Settings > Privacy & Security > \(name)."
         case .restricted:
@@ -154,7 +155,7 @@ class AsrCtrl {
     private func authError(_ name: String, status: SFSpeechRecognizerAuthorizationStatus) -> String {
         switch status {
         case .notDetermined:
-            return "\(name) permission has not been granted. macOS does not reliably prompt CLI tools for \(name); please grant access to your terminal in System Settings > Privacy & Security > \(name)."
+            return "\(name) permission has not been granted. Run `maclisten auth` and grant access to your terminal in System Settings."
         case .denied:
             return "\(name) permission denied. Enable it in System Settings > Privacy & Security > \(name)."
         case .restricted:
