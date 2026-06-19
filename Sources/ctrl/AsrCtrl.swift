@@ -46,7 +46,14 @@ class AsrCtrl {
         }
     }
 
-    func transcribeMicrophone(locale: String, onDevice: Bool, timeout: TimeInterval, onPartial: ((String) -> Void)? = nil) async -> [String: Any] {
+    func transcribeMicrophone(
+        locale: String,
+        onDevice: Bool,
+        timeout: TimeInterval,
+        onPartial: ((String) -> Void)? = nil,
+        autoStop: Bool = false,
+        autoStopSilence: TimeInterval = 1.5
+    ) async -> [String: Any] {
         let speechStatus = SFSpeechRecognizer.authorizationStatus()
         guard speechStatus == .authorized else {
             return ["ok": false, "error": authError("Speech Recognition", status: speechStatus)]
@@ -77,6 +84,9 @@ class AsrCtrl {
 
         var partialTexts: [String] = []
         var finalText: String?
+        var lastPartialText: String = ""
+        var lastPartialTime: Date = Date()
+        var shouldStop = false
 
         recognitionTask = recognizer.recognitionTask(with: request) { result, error in
             if let result = result {
@@ -86,6 +96,10 @@ class AsrCtrl {
                 } else {
                     partialTexts.append(text)
                     onPartial?(text)
+                    if autoStop {
+                        lastPartialText = text
+                        lastPartialTime = Date()
+                    }
                 }
             }
         }
@@ -101,18 +115,37 @@ class AsrCtrl {
             return ["ok": false, "error": "Audio engine start failed: \(error.localizedDescription)"]
         }
 
-        try? await Task.sleep(nanoseconds: UInt64(timeout * 1_000_000_000))
+        if autoStop {
+            Timer.scheduledTimer(withTimeInterval: 0.2, repeats: true) { timer in
+                let silence = Date().timeIntervalSince(lastPartialTime)
+                if !lastPartialText.isEmpty && silence >= autoStopSilence {
+                    shouldStop = true
+                    self.stopMicrophone()
+                    timer.invalidate()
+                }
+            }
+        }
+
+        let start = Date()
+        while !shouldStop && Date().timeIntervalSince(start) < timeout {
+            try? await Task.sleep(nanoseconds: 200_000_000)
+        }
 
         stopMicrophone()
 
         let text = finalText ?? partialTexts.last ?? ""
-        return [
+        var result: [String: Any] = [
             "ok": true,
             "locale": locale,
             "onDevice": onDevice,
             "timeout": timeout,
             "text": text,
         ]
+        if autoStop {
+            result["stoppedEarly"] = shouldStop
+            result["recordedSeconds"] = Date().timeIntervalSince(start)
+        }
+        return result
     }
 
     func stopMicrophone() {

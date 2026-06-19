@@ -44,6 +44,7 @@ enum MicCmd: Cmd {
             OptMeta(name: "--on-device", type: Bool.self, desc: "Require on-device recognition"),
             OptMeta(name: "--timeout", type: Double.self, desc: "Recording timeout in seconds (default: 10.0)", `default`: 10.0),
             OptMeta(name: "--partial", type: Bool.self, desc: "Stream partial results as JSON lines"),
+            OptMeta(name: "--auto-stop", type: Bool.self, desc: "Stop when partial results stop changing for 1.5s"),
             OptMeta(name: "--json", type: Bool.self, desc: "Output JSON (default)"),
         ],
         run: { p in
@@ -51,15 +52,17 @@ enum MicCmd: Cmd {
             let onDevice = p.opt("--on-device") as Bool? ?? false
             let timeout = p.opt("--timeout") as Double? ?? 10.0
             let partial = p.opt("--partial") as Bool? ?? false
+            let autoStop = p.opt("--auto-stop") as Bool? ?? false
 
             let result = await AsrCtrl().transcribeMicrophone(
                 locale: locale,
                 onDevice: onDevice,
                 timeout: timeout,
-                onPartial: partial ? { text in
+                onPartial: (partial || autoStop) ? { text in
                     printJson(["ok": true, "partial": true, "text": text])
                     fflush(stdout)
-                } : nil
+                } : nil,
+                autoStop: autoStop
             )
             printJson(result)
         }
