@@ -4,7 +4,7 @@ func printJson(_ data: [String: Any]) {
     do {
         let d = try JSONSerialization.data(
             withJSONObject: data,
-            options: [.prettyPrinted, .sortedKeys, .fragmentsAllowed]
+            options: [.sortedKeys, .fragmentsAllowed]
         )
         if let s = String(data: d, encoding: .utf8) {
             print(s)

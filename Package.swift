@@ -19,6 +19,7 @@ let package = Package(
                     "-Xlinker", "Info.plist"
                 ])
             ]
-        )
+        ),
+        .testTarget(name: "maclistenTests", dependencies: ["maclisten"]),
     ]
 )

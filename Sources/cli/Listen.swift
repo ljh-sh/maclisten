@@ -8,7 +8,9 @@ enum ListenCmd: Cmd {
         subcmds: [
             "file": FileCmd.self,
             "mic": MicCmd.self,
+            "watch": WatchCmd.self,
             "locales": LocalesCmd.self,
+            "auth": AuthCmd.self,
         ]
     )
 }
@@ -46,6 +48,7 @@ enum MicCmd: Cmd {
             OptMeta(name: "--partial", type: Bool.self, desc: "Stream partial results as JSON lines"),
             OptMeta(name: "--auto-stop", type: Bool.self, desc: "Stop when partial text stops changing"),
             OptMeta(name: "--auto-stop-silence", type: Double.self, desc: "Seconds of stable partial text before auto-stop (default: 5.0)", `default`: 5.0),
+            OptMeta(name: "--output", type: String.self, desc: "Also save microphone audio to this file (WAV, 16kHz, 16-bit, mono)"),
             OptMeta(name: "--json", type: Bool.self, desc: "Output JSON (default)"),
         ],
         run: { p in
@@ -55,6 +58,8 @@ enum MicCmd: Cmd {
             let partial = p.opt("--partial") as Bool? ?? false
             let autoStop = p.opt("--auto-stop") as Bool? ?? false
             let autoStopSilence = p.opt("--auto-stop-silence") as Double? ?? 5.0
+            let output = p.opt("--output") as String?
+            let outputURL = output.map { URL(fileURLWithPath: $0) }
 
             let result = await AsrCtrl().transcribeMicrophone(
                 locale: locale,
@@ -65,7 +70,8 @@ enum MicCmd: Cmd {
                     fflush(stdout)
                 } : nil,
                 autoStop: autoStop,
-                autoStopSilence: autoStopSilence
+                autoStopSilence: autoStopSilence,
+                outputURL: outputURL
             )
             printJson(result)
         }
@@ -82,6 +88,49 @@ enum LocalesCmd: Cmd {
         run: { p in
             let locales = AsrCtrl.supportedLocales()
             printJson(["ok": true, "count": locales.count, "locales": locales])
+        }
+    )
+}
+
+enum WatchCmd: Cmd {
+    static let meta = CmdMeta(
+        name: "watch",
+        desc: "Continuously listen for voice keywords / commands (restarts recognition automatically)",
+        opts: [
+            OptMeta(name: "--locale", type: String.self, desc: "Locale identifier (default: en-US)", `default`: "en-US"),
+            OptMeta(name: "--on-device", type: Bool.self, desc: "Require on-device recognition"),
+            OptMeta(name: "--keyword", type: String.self, desc: "Only emit segments containing this keyword"),
+            OptMeta(name: "--output", type: String.self, desc: "Also save microphone audio to this file (WAV, 16kHz, 16-bit, mono)"),
+            OptMeta(name: "--partial", type: Bool.self, desc: "Stream partial results as JSON lines"),
+            OptMeta(name: "--json", type: Bool.self, desc: "Output final summary JSON (default)"),
+        ],
+        run: { p in
+            let locale = p.opt("--locale") as String? ?? "en-US"
+            let onDevice = p.opt("--on-device") as Bool? ?? false
+            let keyword = p.opt("--keyword") as String?
+            let output = p.opt("--output") as String?
+            let outputURL = output.map { URL(fileURLWithPath: $0) }
+            let partial = p.opt("--partial") as Bool? ?? false
+            let json = p.opt("--json") as Bool? ?? true
+
+            let ctrl = WatchCtrl()
+            let result = await ctrl.watch(
+                locale: locale,
+                onDevice: onDevice,
+                keyword: keyword,
+                onPartial: partial ? { text in
+                    printJson(["ok": true, "partial": true, "text": text])
+                    fflush(stdout)
+                } : nil,
+                onSegment: { text in
+                    printJson(["ok": true, "segment": text])
+                    fflush(stdout)
+                },
+                outputURL: outputURL
+            )
+            if json {
+                printJson(result)
+            }
         }
     )
 }
