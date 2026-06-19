@@ -44,7 +44,8 @@ enum MicCmd: Cmd {
             OptMeta(name: "--on-device", type: Bool.self, desc: "Require on-device recognition"),
             OptMeta(name: "--timeout", type: Double.self, desc: "Recording timeout in seconds (default: 10.0)", `default`: 10.0),
             OptMeta(name: "--partial", type: Bool.self, desc: "Stream partial results as JSON lines"),
-            OptMeta(name: "--auto-stop", type: Double.self, desc: "Stop when partial text is stable for N seconds (e.g. --auto-stop 1.5)", `default`: -1.0),
+            OptMeta(name: "--auto-stop", type: Bool.self, desc: "Stop when partial text stops changing"),
+            OptMeta(name: "--auto-stop-silence", type: Double.self, desc: "Seconds of stable partial text before auto-stop (default: 5.0)", `default`: 5.0),
             OptMeta(name: "--json", type: Bool.self, desc: "Output JSON (default)"),
         ],
         run: { p in
@@ -52,9 +53,8 @@ enum MicCmd: Cmd {
             let onDevice = p.opt("--on-device") as Bool? ?? false
             let timeout = p.opt("--timeout") as Double? ?? 10.0
             let partial = p.opt("--partial") as Bool? ?? false
-            let autoStopValue = p.opt("--auto-stop") as Double? ?? -1.0
-            let autoStop = autoStopValue >= 0
-            let autoStopSilence = autoStop ? autoStopValue : 1.5
+            let autoStop = p.opt("--auto-stop") as Bool? ?? false
+            let autoStopSilence = p.opt("--auto-stop-silence") as Double? ?? 5.0
 
             let result = await AsrCtrl().transcribeMicrophone(
                 locale: locale,
