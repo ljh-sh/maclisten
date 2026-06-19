@@ -7,6 +7,7 @@ enum MaclistenRoot: Cmd {
         subcmds: [
             "file": FileCmd.self,
             "mic": MicCmd.self,
+            "watch": WatchCmd.self,
             "locales": LocalesCmd.self,
             "auth": AuthCmd.self,
         ],
@@ -24,8 +25,12 @@ enum MaclistenRoot: Cmd {
                 try await FileCmd.meta.run?(subArgs)
             case "mic":
                 try await MicCmd.meta.run?(subArgs)
+            case "watch":
+                try await WatchCmd.meta.run?(subArgs)
             case "locales":
                 try await LocalesCmd.meta.run?(subArgs)
+            case "auth":
+                try await AuthCmd.meta.run?(subArgs)
             default:
                 cmdError("unknown subcommand: \(sub)")
             }

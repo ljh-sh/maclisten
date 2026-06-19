@@ -52,7 +52,8 @@ class AsrCtrl {
         timeout: TimeInterval,
         onPartial: ((String) -> Void)? = nil,
         autoStop: Bool = false,
-        autoStopSilence: TimeInterval = 1.5
+        autoStopSilence: TimeInterval = 1.5,
+        outputURL: URL? = nil
     ) async -> [String: Any] {
         let speechStatus = SFSpeechRecognizer.authorizationStatus()
         guard speechStatus == .authorized else {
@@ -82,6 +83,14 @@ class AsrCtrl {
         let inputNode = audioEngine!.inputNode
         let recordingFormat = inputNode.outputFormat(forBus: 0)
 
+        var writer: AudioFileWriter?
+        if let outputURL = outputURL {
+            writer = AudioFileWriter(url: outputURL, inputFormat: recordingFormat)
+            if writer == nil {
+                return ["ok": false, "error": "Unable to open output audio file at \(outputURL.path)"]
+            }
+        }
+
         var partialTexts: [String] = []
         var finalText: String?
         var lastPartialText: String = ""
@@ -106,6 +115,7 @@ class AsrCtrl {
 
         inputNode.installTap(onBus: 0, bufferSize: 1024, format: recordingFormat) { buffer, _ in
             self.recognitionRequest?.append(buffer)
+            writer?.write(buffer)
         }
 
         audioEngine?.prepare()
@@ -132,18 +142,23 @@ class AsrCtrl {
         }
 
         stopMicrophone()
+        writer?.close()
 
         let text = finalText ?? partialTexts.last ?? ""
+        let recordedSeconds = Date().timeIntervalSince(start)
         var result: [String: Any] = [
             "ok": true,
             "locale": locale,
             "onDevice": onDevice,
             "timeout": timeout,
             "text": text,
+            "recordedSeconds": recordedSeconds,
         ]
         if autoStop {
             result["stoppedEarly"] = shouldStop
-            result["recordedSeconds"] = Date().timeIntervalSince(start)
+        }
+        if let outputURL = outputURL {
+            result["output"] = outputURL.path
         }
         return result
     }
