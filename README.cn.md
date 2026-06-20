@@ -5,9 +5,16 @@
 [![Docs](https://img.shields.io/badge/Docs-website-blue.svg)](https://ljh-sh.github.io/maclisten)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE.txt)
 
-> 轻量级 macOS ASR CLI —— 文件转录、麦克风录音、持续关键词监听。
+> 私密、轻量的 macOS ASR CLI —— 本地语音转文字，系统占用极低。
 
-**maclisten** 把 Apple 的 `Speech` 框架封装成一个小小的 Swift 二进制。它能列出系统支持的语言、转录音频文件、录制麦克风，并持续监听语音关键词。所有输出都是紧凑 JSON，方便管道和 AI 智能体使用。
+**maclisten** 把 Apple 的 `Speech` 框架封装成一个极小的 Swift 二进制。它能在本地转录音频文件、录制麦克风，并持续监听语音关键词，所有数据都不离开你的 Mac。所有输出都是紧凑 JSON，方便管道和 AI 智能体使用。
+
+## 亮点
+
+- **默认私密** —— 音频由 Apple `Speech` 框架本地处理；开启 `--on-device` 后完全不上传。
+- **系统占用极低** —— 单个约 500 KB 二进制，无需下载模型，无守护进程，无后台服务。
+- **JSON 优先** —— 每个命令都输出紧凑 JSON，方便管道和智能体解析。
+- **持续监听** —— `watch` 保持麦克风开启，实时输出分段 / 关键词 JSON 行。
 
 文档：[ljh-sh.github.io/maclisten](https://ljh-sh.github.io/maclisten)
 

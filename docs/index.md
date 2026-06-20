@@ -5,7 +5,7 @@ title: Home
 
 <div class="hero">
   <h1>maclisten</h1>
-  <p>Lightweight macOS ASR CLI — speech-to-text for files, microphone, and continuous keyword listening.</p>
+  <p>Private, lightweight macOS ASR CLI — local speech-to-text with a tiny footprint.</p>
   <div class="cta">
     <a class="btn primary" href="{{ '/install' | relative_url }}">Install</a>
     <a class="btn secondary" href="{{ '/subcommands' | relative_url }}">Command reference</a>
@@ -15,11 +15,11 @@ title: Home
 
 ## What is maclisten?
 
-**maclisten** wraps Apple's `Speech` framework in a tiny Swift binary. It lists supported locales, transcribes audio files, records from the microphone, and can listen continuously for voice keywords — all from the command line, all with compact JSON output.
+**maclisten** wraps Apple's `Speech` framework in a tiny Swift binary. It transcribes audio files, records from the microphone, and can listen continuously for voice keywords — all from the command line, all locally on your Mac, all with compact JSON output.
 
-Use it when you (or your AI agent) need reliable macOS-native speech-to-text that `whisper.cpp` or web APIs make heavy:
+Use it when you (or your AI agent) need reliable macOS-native speech-to-text without the privacy cost or resource weight of web APIs and downloaded models:
 
-- *Transcribe a voice memo into JSON*
+- *Transcribe a voice memo into JSON without uploading it*
 - *Keep listening for the word "computer" and react with a script*
 - *Capture microphone audio alongside the transcript*
 

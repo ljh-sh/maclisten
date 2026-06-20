@@ -5,12 +5,27 @@ title: Why maclisten?
 
 # Why maclisten?
 
+## Privacy by default
+
+maclisten sends nothing to a third party unless you explicitly disable on-device recognition:
+
+- Audio is processed by Apple's native `Speech` framework.
+- With `--on-device`, recognition happens entirely on your Mac.
+- No API keys, no audio uploads, no cloud billing.
+
 ## Why a CLI instead of a web API?
 
 - **No network round-trip** — audio stays on the Mac.
 - **No API keys** — uses the Apple ID already on the machine.
 - **Predictable latency** — especially when `--on-device` is available.
 - **Pipe-friendly** — output JSON lines can drive shell scripts and agents.
+
+## Tiny footprint
+
+- Single ~500 KB Swift binary.
+- No model download.
+- No daemon, no background service, no configuration file.
+- Starts instantly and exits cleanly.
 
 ## Why not whisper.cpp?
 

@@ -33,7 +33,8 @@ title: Alternatives
 
 Choose maclisten when you want:
 
-- A tiny native binary with no model download.
+- A tiny native binary with no model download and minimal resource use.
+- Audio processed locally, with an `--on-device` option that keeps it on your Mac.
 - Compact JSON output for scripts and agents.
 - Continuous keyword listening on macOS.
 - Audio and transcript saved together.
