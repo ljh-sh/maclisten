@@ -79,9 +79,17 @@ You can open the right panes quickly:
 maclisten auth
 ```
 
+Example output:
+
+```json
+{"ok":true,"opened":["Speech Recognition","Microphone"]}
+```
+
 ### Important: run from a terminal emulator app
 
 macOS TCC grants permissions to the **app bundle** that owns the terminal — e.g. `Terminal.app`, `iTerm.app`, `Warp.app`. If you run `maclisten` from a bare CLI process without a bundle (like `Kimi Code CLI`), the permission cannot be granted and `file`/`mic`/`watch` will fail even after you click Allow.
+
+If a pane opens but toggles stay disabled, close the permission windows and relaunch your terminal app, then rerun `maclisten auth` from there.
 
 ## Usage
 

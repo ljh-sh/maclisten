@@ -17,6 +17,15 @@ macOS TCC grants Speech Recognition / Microphone access to the **terminal emulat
 
 No — calling `SFSpeechRecognizer.requestAuthorization()` from a bare CLI binary aborts on macOS 14+. maclisten only checks `authorizationStatus()` and returns a JSON error. Use `maclisten auth` to open the right settings panes.
 
+### `maclisten auth` opens System Settings but toggles are disabled or already enabled with no effect
+
+This is usually caused by running the command outside a normal terminal app bundle. TCC applies permission decisions to the **terminal emulator app** (e.g. `Terminal.app`, `iTerm.app`), not directly to `maclisten`.
+
+**Fix**
+
+- Run `maclisten auth` from `Terminal.app` / `iTerm` / `Warp`.
+- If the toggles are still inactive, close Settings and reopen it via a fresh terminal window, then retry `maclisten auth`.
+
 ### Do I need to grant Microphone access for `maclisten file`?
 
 No. Only `mic` and `watch` use the microphone.
