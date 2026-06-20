@@ -53,7 +53,7 @@ The `universal` tarball is a fat Mach-O (arm64 + x86_64) — works on Apple Sili
 ### eget
 
 ```sh
-x eget use --tag v0.2.0 ljh-sh/maclisten
+x eget use --tag v0.2.1 ljh-sh/maclisten
 ```
 
 ### Build from source
