@@ -1,0 +1,23 @@
+title: maclisten
+description: Lightweight macOS ASR CLI for shell and AI agents
+baseurl: "/maclisten"
+url: "https://ljh-sh.github.io"
+
+permalink: pretty
+
+markdown: kramdown
+kramdown:
+  input: GFM
+  syntax_highlighter: rouge
+
+plugins:
+  - jekyll-relative-links
+
+relative_links:
+  enabled: true
+  collections: true
+
+exclude:
+  - Gemfile
+  - Gemfile.lock
+  - README.md
