@@ -38,13 +38,16 @@ Transcribe an audio file.
 ```sh
 maclisten file ./recording.wav
 maclisten file ./recording.m4a --locale zh-CN --on-device
+maclisten file ./recording.m4a --cn --on-device
+maclisten file ./recording.m4a --fr --on-device
 ```
 
 **Options**
 
 | Option | Default | Description |
 |---|---|---|
-| `--locale` | `en-US` | Locale identifier for recognition |
+| `--locale` | inferred | Locale identifier. Defaults to `$MACLISTEN_LOCALE`, then `$LANG` (e.g. `fr_FR.UTF-8` → `fr-FR`), then `en-US` |
+| `--cn`, `--hk`, `--tw`, `--us`, `--gb`, `--fr`, `--de`, ... | — | Region/language shortcut for `--locale <value>`. Run `maclisten file --help` for the full list |
 | `--on-device` | false | Require on-device recognition |
 
 **Output fields**
@@ -67,13 +70,16 @@ Record from the microphone and transcribe.
 maclisten mic --timeout 5
 maclisten mic --auto-stop --auto-stop-silence 3.0
 maclisten mic --partial --output ./note.wav
+maclisten mic --hk --partial
+maclisten mic --de --partial
 ```
 
 **Options**
 
 | Option | Default | Description |
 |---|---|---|
-| `--locale` | `en-US` | Locale identifier |
+| `--locale` | inferred | Locale identifier. Defaults to `$MACLISTEN_LOCALE`, then `$LANG`, then `en-US` |
+| `--cn`, `--hk`, `--tw`, `--us`, `--gb`, `--fr`, `--de`, ... | — | Region/language shortcut for `--locale <value>`. Run `maclisten mic --help` for the full list |
 | `--on-device` | false | Require on-device recognition |
 | `--timeout` | `10.0` | Maximum recording time in seconds |
 | `--auto-stop` | false | Stop when partial text stops changing |
@@ -113,13 +119,16 @@ Continuously listen for voice keywords or commands. Restarts recognition session
 maclisten watch
 maclisten watch --keyword "computer" --partial
 maclisten watch --output ./stream.wav
+maclisten watch --cn --keyword "电脑"
+maclisten watch --fr --keyword "ordinateur"
 ```
 
 **Options**
 
 | Option | Default | Description |
 |---|---|---|
-| `--locale` | `en-US` | Locale identifier |
+| `--locale` | inferred | Locale identifier. Defaults to `$MACLISTEN_LOCALE`, then `$LANG`, then `en-US` |
+| `--cn`, `--hk`, `--tw`, `--us`, `--gb`, `--fr`, `--de`, ... | — | Region/language shortcut for `--locale <value>`. Run `maclisten watch --help` for the full list |
 | `--on-device` | false | Require on-device recognition |
 | `--keyword` | — | Only emit segments containing this keyword |
 | `--output` | — | Save microphone audio to this WAV file |

@@ -74,6 +74,7 @@ macOS TCC 把权限授给**终端模拟器 app**（如 `Terminal.app`、`iTerm.a
 maclisten locales                        # 列出支持的语言
 maclisten file ./recording.wav           # 转录音频文件
 maclisten file ./recording.m4a --locale zh-CN --on-device
+maclisten file ./recording.m4a --cn --on-device
 
 maclisten mic --timeout 5                # 录制 5 秒麦克风
 maclisten mic --auto-stop                # 检测到停止说话后自动停止
@@ -83,7 +84,15 @@ maclisten mic --output ./note.wav        # 同时保存 WAV 音频
 # 持续监听关键词 / 命令短语
 maclisten watch --keyword "computer" --partial
 maclisten watch --output ./stream.wav    # 边听边录
+maclisten watch --fr --keyword "ordinateur"
 # 按 Ctrl-C 或 Ctrl-D 停止
+```
+
+语言区域可以用 `--locale` 指定，也可以用快捷标志如 `--cn`、`--hk`、`--fr`、`--de`、`--us` 等。如果都没有提供，会依次读取环境变量 `$MACLISTEN_LOCALE`、`$LANG`，最后回退到 `en-US`。
+
+```sh
+MACLISTEN_LOCALE=fr-FR maclisten mic --timeout 5
+LANG=de_DE.UTF-8 maclisten file ./recording.wav
 ```
 
 默认输出 JSON：

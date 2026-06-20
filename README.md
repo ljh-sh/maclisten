@@ -82,6 +82,7 @@ macOS TCC grants permissions to the **app bundle** that owns the terminal — e.
 maclisten locales                        # list supported locales
 maclisten file ./recording.wav           # transcribe a file
 maclisten file ./recording.m4a --locale zh-CN --on-device
+maclisten file ./recording.m4a --cn --on-device
 
 maclisten mic --timeout 5                # record 5 seconds from microphone
 maclisten mic --auto-stop                # stop when you stop speaking
@@ -91,7 +92,15 @@ maclisten mic --output ./note.wav        # also save audio to WAV
 # Continuously listen for a keyword / command phrase
 maclisten watch --keyword "computer" --partial
 maclisten watch --output ./stream.wav    # keep recording while listening
+maclisten watch --fr --keyword "ordinateur"
 # Press Ctrl-C or Ctrl-D to stop; a "stopped" JSON line is emitted
+```
+
+Locale can be set with `--locale`, or with shortcuts like `--cn`, `--hk`, `--fr`, `--de`, `--us`, etc. If neither is given, `maclisten` reads `$MACLISTEN_LOCALE`, then `$LANG`, and falls back to `en-US`.
+
+```sh
+MACLISTEN_LOCALE=fr-FR maclisten mic --timeout 5
+LANG=de_DE.UTF-8 maclisten file ./recording.wav
 ```
 
 Output is JSON by default:
