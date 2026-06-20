@@ -1,5 +1,5 @@
 title: maclisten
-description: Lightweight macOS ASR CLI for shell and AI agents
+description: Private, lightweight macOS ASR CLI for local speech-to-text from files, microphone, and continuous keyword listening.
 baseurl: "/maclisten"
 url: "https://ljh-sh.github.io"
 
@@ -12,6 +12,7 @@ kramdown:
 
 plugins:
   - jekyll-relative-links
+  - jekyll-sitemap
 
 relative_links:
   enabled: true
