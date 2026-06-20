@@ -5,7 +5,7 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 . "$SCRIPT_DIR/release.common.sh"
 
-BIN_NAME="${BIN_NAME:-macli}"
+BIN_NAME="${BIN_NAME:-maclisten}"
 init_common
 
 DID_BUILD=0
