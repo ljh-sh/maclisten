@@ -27,9 +27,13 @@ Every command prints JSON. This makes maclisten easy to pipe into `jq`, Python, 
 {"ok":false,"error":"Speech Recognition permission has not been granted..."}
 ```
 
-## Native frameworks only
+## Privacy first
 
-maclisten uses `SFSpeechRecognizer` and `AVAudioEngine`. It does not bundle a speech model and does not send audio to third-party services (unless on-device recognition is disabled and Apple's servers are used).
+maclisten uses `SFSpeechRecognizer` and `AVAudioEngine`. It does not bundle a speech model and does not send audio to third-party services unless you opt out of on-device recognition. With `--on-device`, everything stays on the Mac.
+
+## Tiny footprint
+
+The binary is a single ~500 KB Swift executable. There is no model download, no daemon, no background service, and no configuration file. It starts fast and releases all resources on exit.
 
 ## CLI that feels like a binary
 

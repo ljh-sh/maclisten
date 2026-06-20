@@ -5,9 +5,16 @@
 [![Docs](https://img.shields.io/badge/Docs-website-blue.svg)](https://ljh-sh.github.io/maclisten)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE.txt)
 
-> Lightweight macOS ASR CLI — speech-to-text for files, microphone, and continuous keyword listening.
+> Private, lightweight macOS ASR CLI — local speech-to-text with a tiny footprint.
 
-**maclisten** wraps Apple's `Speech` framework in a tiny Swift binary. It lists supported locales, transcribes audio files, records from the microphone, and can keep listening for voice keywords. All output is compact JSON, so it fits neatly into shell pipelines and AI agent workflows.
+**maclisten** wraps Apple's `Speech` framework in a tiny Swift binary. It transcribes audio files, records from the microphone, and can keep listening for voice keywords — all locally on your Mac. All output is compact JSON, so it fits neatly into shell pipelines and AI agent workflows.
+
+## Highlights
+
+- **Private by default** — audio is processed by Apple's `Speech` framework; with `--on-device` recognition never leaves your Mac.
+- **Tiny footprint** — single ~500 KB Swift binary, no model download, no daemon, no background service.
+- **JSON-first** — every command outputs compact JSON for pipes and agents.
+- **Continuous listening** — `watch` keeps the microphone open and emits segments/keywords as JSON lines.
 
 Docs: [ljh-sh.github.io/maclisten](https://ljh-sh.github.io/maclisten)
 
