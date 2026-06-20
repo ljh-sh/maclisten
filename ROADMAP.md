@@ -25,7 +25,7 @@ Goal: harden the core ASR paths and prepare for distribution.
 - [ ] Add unit tests for CLI argument parsing and JSON output formatting
 - [ ] Add a minimal mock-based test for `AsrCtrl` error paths
 - [ ] Homebrew tap formula in [`ljh-sh/homebrew-cli`](https://github.com/ljh-sh/homebrew-cli)
-- [ ] Signed GitHub releases
+- [x] Signed GitHub releases
 - [ ] OpenSSF Scorecard >= 8.5
   - branch protection with required admin review
   - dependency update automation
