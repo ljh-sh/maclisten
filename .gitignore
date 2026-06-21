@@ -3,3 +3,5 @@
 *.xcworkspace
 *.xcodeproj
 .release-artifacts
+npm/tmp-*
+npm/bin/maclisten-binary
