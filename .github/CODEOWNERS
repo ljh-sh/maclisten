@@ -1,2 +1,2 @@
-# Require admin review for all changes.
-* @edwinjhlee
+# Require code-owner review for all changes.
+* @edwinjhlee @ljh-zs
