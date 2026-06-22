@@ -53,7 +53,12 @@ struct LocaleShortcuts {
 }
 
 private let localeOptions: [OptMeta] = [
-    OptMeta(name: "--locale", type: String.self, desc: "Locale identifier (default: $MACLISTEN_LOCALE, $LANG, or en-US)", `default`: "en-US"),
+    OptMeta(
+        name: "--locale",
+        type: String.self,
+        desc: "Locale identifier, repeatable (default: $MACLISTEN_LOCALE, $LANG, or en-US). On `file`, pass 2+ to auto-pick the highest-confidence result",
+        multiple: true
+    ),
 ] + LocaleShortcuts.options
 
 /// Determine the default locale from the environment.
@@ -77,13 +82,42 @@ private func defaultLocale() -> String {
     return "en-US"
 }
 
+/// Collect every locale the user asked for on `file`: repeated `--locale` values plus any
+/// `--<lang>` shortcut flags present. `--locale` values come first (in given order), then
+/// shortcuts in alphabetical order. Dedup preserves first occurrence. Returns `[]` when
+/// nothing was specified.
+private func resolveLocales(_ p: ParsedCmd) -> [String] {
+    var seen = Set<String>()
+    var list: [String] = []
+    func add(_ loc: String) {
+        if !seen.contains(loc) {
+            seen.insert(loc)
+            list.append(loc)
+        }
+    }
+    if let arr = p.opt("--locale") as [String]? {
+        arr.forEach(add)
+    }
+    for (key, locale) in LocaleShortcuts.map.sorted(by: { $0.key < $1.key }) {
+        if p.opt("--\(key)") as Bool? ?? false {
+            add(locale)
+        }
+    }
+    return list
+}
+
+/// Resolve a single locale for `mic` / `watch` (shortcut flags take precedence, then the
+/// first `--locale` value, then the environment default).
 private func resolveLocale(_ p: ParsedCmd) -> String {
-    for (flag, locale) in LocaleShortcuts.map {
-        if p.opt("--\(flag)") as Bool? ?? false {
+    for (key, locale) in LocaleShortcuts.map.sorted(by: { $0.key < $1.key }) {
+        if p.opt("--\(key)") as Bool? ?? false {
             return locale
         }
     }
-    return p.opt("--locale") as String? ?? defaultLocale()
+    if let arr = p.opt("--locale") as [String]?, let first = arr.first {
+        return first
+    }
+    return defaultLocale()
 }
 
 enum ListenCmd: Cmd {
@@ -103,20 +137,49 @@ enum ListenCmd: Cmd {
 enum FileCmd: Cmd {
     static let meta = CmdMeta(
         name: "file",
-        desc: "Transcribe an audio file",
+        desc: "Transcribe an audio file; pass 2+ locales (repeatable --locale or --cn --en ...) to auto-pick the best-confidence result",
         opts: localeOptions + [
             OptMeta(name: "--on-device", type: Bool.self, desc: "Require on-device recognition"),
+            OptMeta(name: "--no-pick", type: Bool.self, desc: "With 2+ locales, emit one JSON line per locale instead of picking the best"),
+            OptMeta(name: "--segments", type: Bool.self, desc: "Include per-segment {text, confidence, start, duration} in output"),
             OptMeta(name: "--json", type: Bool.self, desc: "Output JSON (default)"),
         ],
-        args: [ArgMeta(name: "path", desc: "Path to audio file")],
+        args: [ArgMeta(name: "path", desc: "Path to audio file — any AVFoundation format: wav, m4a, mp3, aac, caf, aiff")],
         run: { p in
             guard let path = p.arg(0) else { cmdError("audio file path required") }
             let url = URL(fileURLWithPath: path)
-            let locale = resolveLocale(p)
+            let locales = resolveLocales(p)
             let onDevice = p.opt("--on-device") as Bool? ?? false
+            let noPick = p.opt("--no-pick") as Bool? ?? false
+            let includeSegments = p.opt("--segments") as Bool? ?? false
 
-            let result = await AsrCtrl().transcribeFile(url: url, locale: locale, onDevice: onDevice)
-            printJson(result)
+            let ctrl = await AsrCtrl()
+            if locales.count >= 2 && noPick {
+                // Auth is global — fail once instead of once per locale.
+                if let authErr = AsrCtrl.speechAuthorizationError() {
+                    printJson(["ok": false, "error": authErr])
+                    return
+                }
+                // One compact JSON line per locale, in order — for an agent / jq to judge.
+                for loc in locales {
+                    let r = await ctrl.transcribeFile(
+                        url: url, locale: loc, onDevice: onDevice, includeSegments: includeSegments
+                    )
+                    printJson(r)
+                    fflush(stdout)
+                }
+            } else if locales.count >= 2 {
+                let r = await ctrl.transcribeFileBest(
+                    url: url, locales: locales, onDevice: onDevice, includeSegments: includeSegments
+                )
+                printJson(r)
+            } else {
+                let loc = locales.first ?? defaultLocale()
+                let r = await ctrl.transcribeFile(
+                    url: url, locale: loc, onDevice: onDevice, includeSegments: includeSegments
+                )
+                printJson(r)
+            }
         }
     )
 }
