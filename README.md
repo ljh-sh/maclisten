@@ -15,6 +15,7 @@
 - **Tiny footprint** — single ~500 KB Swift binary, no model download, no daemon, no background service.
 - **JSON-first** — every command outputs compact JSON for pipes and agents.
 - **Continuous listening** — `watch` keeps the microphone open and emits segments/keywords as JSON lines.
+- **Multi-locale `file`** — pass several candidate locales and `file` returns the highest-confidence transcription; ideal for recognizing a recording of unknown language.
 
 Docs: [ljh-sh.github.io/maclisten](https://ljh-sh.github.io/maclisten)
 
@@ -23,7 +24,7 @@ Docs: [ljh-sh.github.io/maclisten](https://ljh-sh.github.io/maclisten)
 Paste this one-line prompt into Claude Code, Cursor, or any agent's system prompt:
 
 ```md
-Use `maclisten` for macOS speech-to-text. Install if missing: `brew install ljh-sh/cli/maclisten`. JSON output, check `ok`. Run `maclisten --help` for subcommands.
+Use `maclisten` for macOS speech-to-text. Install if missing: `brew install ljh-sh/cli/maclisten`. JSON output, check `ok`. Run `maclisten --help` for subcommands. For a recording of unknown language, pass candidate locales to `file` and it returns the best-confidence result, e.g. `maclisten file clip.m4a --locale zh-CN --locale en-US`; add `--no-pick` to get one line per locale instead.
 ```
 
 ## Install
@@ -90,6 +91,8 @@ maclisten locales                        # list supported locales
 maclisten file ./recording.wav           # transcribe a file
 maclisten file ./recording.m4a --locale zh-CN --on-device
 maclisten file ./recording.m4a --cn --on-device
+maclisten file ./clip.m4a --locale zh-CN --locale en-US   # 2+ locales → best-confidence wins
+maclisten file ./clip.m4a --cn --en --no-pick             # one JSON line per locale
 
 maclisten mic --timeout 5                # record 5 seconds from microphone
 maclisten mic --auto-stop                # stop when you stop speaking
@@ -105,15 +108,40 @@ maclisten watch --fr --keyword "ordinateur"
 
 Locale can be set with `--locale`, or with shortcuts like `--cn`, `--hk`, `--fr`, `--de`, `--us`, etc. If neither is given, `maclisten` reads `$MACLISTEN_LOCALE`, then `$LANG`, and falls back to `en-US`.
 
+**Supported formats** — `file` reads any audio Apple's AVFoundation decodes: `.wav`, `.m4a`/`.aac`, `.mp3`, `.caf`, `.aiff` (and audio from `.mov`/`.mp4`). PCM WAV and AAC/M4A are most reliable.
+
 ```sh
 MACLISTEN_LOCALE=fr-FR maclisten mic --timeout 5
 LANG=de_DE.UTF-8 maclisten file ./recording.wav
 ```
 
+### Recognize a recording (auto language pick)
+
+Apple's `Speech` framework is single-locale — it has no language-detection step. For a recording whose language you're unsure of, give `file` a **short candidate list** (your best guesses) and it runs each one and returns the **highest-confidence** result. You decide the candidates — `maclisten` never iterates every locale.
+
+```sh
+# agent guesses Chinese or English → one best-confidence result
+maclisten file ./clip.m4a --locale zh-CN --locale en-US
+
+# same thing with shortcuts
+maclisten file ./clip.m4a --cn --en
+
+# want every locale's raw line, to judge yourself?
+maclisten file ./clip.m4a --locale zh-CN --locale en-US --no-pick | jq -s 'max_by(.confidence)'
+```
+
+Default (2+ locales) prints one JSON object — the winner — with a `candidates` scoreboard:
+
+```json
+{"ok":true,"locale":"zh-CN","onDevice":false,"confidence":0.91,"text":"你好世界","candidates":[{"ok":true,"locale":"zh-CN","confidence":0.91,"text":"你好世界"},{"ok":true,"locale":"en-US","confidence":0.42,"text":"你好世界"}]}
+```
+
+Add `--no-pick` to get one line per locale instead of a winner. Add `--segments` for per-segment `{text, confidence, start, duration}`. Confidence is a recognizer heuristic, not a true language ID — keep candidates plausible (wrong-locale recognition can still hallucinate).
+
 Output is JSON by default:
 
 ```json
-{"ok":true,"locale":"en-US","onDevice":false,"text":"hello world"}
+{"ok":true,"locale":"en-US","onDevice":false,"confidence":0.97,"text":"hello world"}
 ```
 
 `watch` emits a JSON line for each captured segment:

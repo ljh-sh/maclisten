@@ -40,24 +40,50 @@ maclisten file ./recording.wav
 maclisten file ./recording.m4a --locale zh-CN --on-device
 maclisten file ./recording.m4a --cn --on-device
 maclisten file ./recording.m4a --fr --on-device
+
+# Multiple locales → run each, return the highest-confidence result
+maclisten file ./clip.m4a --locale zh-CN --locale en-US
+maclisten file ./clip.m4a --cn --en                 # shortcuts work too
+maclisten file ./clip.m4a --cn --en --no-pick       # one JSON line per locale
 ```
+
+**Supported formats** — any audio file Apple's AVFoundation can decode: `.wav`, `.m4a`/`.aac`, `.mp3`, `.caf`, `.aiff`, and audio tracks from `.mov`/`.mp4`. PCM WAV and AAC/M4A are the most reliable.
+
+### Multi-locale (auto language pick)
+
+Apple's `Speech` framework is single-locale with no language-detection step. When a recording's language is uncertain, pass a **short candidate list** (your guesses). `file` runs each and, by default, returns the **highest-confidence** result with a `candidates` scoreboard. The caller chooses the candidates — `maclisten` never iterates every supported locale.
+
+```sh
+# best-confidence winner (default)
+maclisten file ./clip.m4a --locale zh-CN --locale en-US
+
+# let an agent / jq judge instead
+maclisten file ./clip.m4a --locale zh-CN --locale en-US --no-pick | jq -s 'max_by(.confidence)'
+```
+
+Confidence is a recognizer heuristic (mean of per-segment confidences), not a true language ID — wrong-locale recognition can still hallucinate, so keep candidates plausible.
 
 **Options**
 
 | Option | Default | Description |
 |---|---|---|
-| `--locale` | inferred | Locale identifier. Defaults to `$MACLISTEN_LOCALE`, then `$LANG` (e.g. `fr_FR.UTF-8` → `fr-FR`), then `en-US` |
-| `--cn`, `--hk`, `--tw`, `--us`, `--gb`, `--fr`, `--de`, ... | — | Region/language shortcut for `--locale <value>`. Run `maclisten file --help` for the full list |
+| `--locale` | inferred | Locale identifier, **repeatable**. Defaults to `$MACLISTEN_LOCALE`, then `$LANG` (e.g. `fr_FR.UTF-8` → `fr-FR`), then `en-US`. With 2+ values, the highest-confidence result is returned |
+| `--cn`, `--hk`, `--tw`, `--us`, `--gb`, `--fr`, `--de`, ... | — | Region/language shortcut for `--locale <value>`; **multiple stack** (`--cn --en` = zh-CN + en-US). Run `maclisten file --help` for the full list |
 | `--on-device` | false | Require on-device recognition |
+| `--no-pick` | false | With 2+ locales, emit one JSON line per locale instead of picking the best |
+| `--segments` | false | Include a per-segment `segments` array of `{text, confidence, start, duration}` |
 
 **Output fields**
 
 | Field | Type | Meaning |
 |---|---|---|
 | `ok` | bool | Success or failure |
-| `locale` | string | Locale used |
+| `locale` | string | Locale used (the winner when 2+ are given) |
 | `onDevice` | bool | Whether on-device recognition was requested |
+| `confidence` | float | Mean per-segment confidence of the best transcription, `0`–`1` |
 | `text` | string | Transcribed text |
+| `candidates` | array | Present with 2+ locales (non-`--no-pick`): `{locale, confidence, text, ok}` per candidate |
+| `segments` | array | Present with `--segments`: `{text, confidence, start, duration}` per segment |
 | `error` | string | Present only if `ok` is `false` |
 
 ---

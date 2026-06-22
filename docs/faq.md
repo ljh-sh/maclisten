@@ -31,7 +31,17 @@ Run `maclisten locales`. The list comes directly from `SFSpeechRecognizer.suppor
 
 ### Can maclisten auto-detect the spoken language?
 
-Not currently. `SFSpeechRecognizer` is single-locale. Speak English into `zh-CN` and recognition quality will be poor. Start `watch` with the locale you expect.
+For `file`: yes, via candidate locales. `SFSpeechRecognizer` itself is single-locale with no language-detection step, so give `file` a **short list of guesses** and it returns the highest-confidence result:
+
+```sh
+maclisten file ./clip.m4a --locale zh-CN --locale en-US        # best-confidence winner
+maclisten file ./clip.m4a --cn --en                            # shortcuts stack
+maclisten file ./clip.m4a --locale zh-CN --locale en-US --no-pick  # one line per locale
+```
+
+Two things to keep in mind: **you choose the candidates** — `maclisten` never iterates every supported locale (an agent typically passes 2–3 guesses); and confidence is a recognizer heuristic, not a true language ID — wrong-locale recognition can still hallucinate, so keep candidates plausible.
+
+For `mic` and `watch`: not supported; pick the single locale you expect.
 
 ### What does `--on-device` do?
 

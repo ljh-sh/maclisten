@@ -43,8 +43,9 @@ Success criteria:
 Goal: improve transcription accuracy and flexibility.
 
 - [ ] On-device recognition availability matrix per locale
-- [ ] Support for multiple locales in a single session (auto-detect or fallback chain)
-- [ ] Confidence scores and alternative transcriptions in JSON output
+- [x] Support for multiple locales in a single session (auto-detect or fallback chain) — `file` multi-locale + `--no-pick` (see [changelog/v0.4.0.md](changelog/v0.4.0.md))
+- [x] Confidence scores in JSON output — `file` exposes `confidence` (+ `--segments`)
+- [ ] Alternative transcriptions in JSON output
 - [ ] Punctuation formatting options
 
 ---

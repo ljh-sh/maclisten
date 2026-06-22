@@ -15,6 +15,7 @@
 - **系统占用极低** —— 单个约 500 KB 二进制，无需下载模型，无守护进程，无后台服务。
 - **JSON 优先** —— 每个命令都输出紧凑 JSON，方便管道和智能体解析。
 - **持续监听** —— `watch` 保持麦克风开启，实时输出分段 / 关键词 JSON 行。
+- **`file` 多语言** —— 给 `file` 传多个候选 locale，自动返回置信度最高的转写；特别适合转写「语言未知」的录音。
 
 文档：[ljh-sh.github.io/maclisten](https://ljh-sh.github.io/maclisten)
 
@@ -82,6 +83,8 @@ maclisten locales                        # 列出支持的语言
 maclisten file ./recording.wav           # 转录音频文件
 maclisten file ./recording.m4a --locale zh-CN --on-device
 maclisten file ./recording.m4a --cn --on-device
+maclisten file ./clip.m4a --locale zh-CN --locale en-US   # 2+ locale → 返回置信度最高
+maclisten file ./clip.m4a --cn --en --no-pick             # 每个 locale 各输出一行
 
 maclisten mic --timeout 5                # 录制 5 秒麦克风
 maclisten mic --auto-stop                # 检测到停止说话后自动停止
@@ -97,15 +100,40 @@ maclisten watch --fr --keyword "ordinateur"
 
 语言区域可以用 `--locale` 指定，也可以用快捷标志如 `--cn`、`--hk`、`--fr`、`--de`、`--us` 等。如果都没有提供，会依次读取环境变量 `$MACLISTEN_LOCALE`、`$LANG`，最后回退到 `en-US`。
 
+**支持的格式** —— `file` 能读 Apple AVFoundation 解码的任何音频：`.wav`、`.m4a`/`.aac`、`.mp3`、`.caf`、`.aiff`（以及 `.mov`/`.mp4` 的音轨）。PCM WAV 和 AAC/M4A 最稳定。
+
 ```sh
 MACLISTEN_LOCALE=fr-FR maclisten mic --timeout 5
 LANG=de_DE.UTF-8 maclisten file ./recording.wav
 ```
 
+### 转写录音（自动挑语言）
+
+Apple 的 `Speech` 框架是单语言的，没有语言检测环节。如果一段录音你不确定是什么语言，给 `file` 传一个**简短的候选列表**（你的猜测），它会逐个跑一遍，返回**置信度最高**的结果。候选由你决定 —— `maclisten` 绝不会把所有 locale 都试一遍。
+
+```sh
+# 智能体猜测是中文或英文 → 返回置信度最高的那一条
+maclisten file ./clip.m4a --locale zh-CN --locale en-US
+
+# 用快捷标志也一样
+maclisten file ./clip.m4a --cn --en
+
+# 想拿到每个 locale 的原始结果，自己判断？
+maclisten file ./clip.m4a --locale zh-CN --locale en-US --no-pick | jq -s 'max_by(.confidence)'
+```
+
+默认（2+ locale）输出一条 JSON —— 即胜出者 —— 并带一个 `candidates` 记分板：
+
+```json
+{"ok":true,"locale":"zh-CN","onDevice":false,"confidence":0.91,"text":"你好世界","candidates":[{"ok":true,"locale":"zh-CN","confidence":0.91,"text":"你好世界"},{"ok":true,"locale":"en-US","confidence":0.42,"text":"你好世界"}]}
+```
+
+加 `--no-pick` 改为每个 locale 输出一行，不挑最优。加 `--segments` 输出每段 `{text, confidence, start, duration}`。置信度只是识别器的启发式估计，不是真正的语言检测 —— 候选要合理（用错 locale 仍可能产生幻觉）。
+
 默认输出 JSON：
 
 ```json
-{"ok":true,"locale":"en-US","onDevice":false,"text":"hello world"}
+{"ok":true,"locale":"en-US","onDevice":false,"confidence":0.97,"text":"hello world"}
 ```
 
 `watch` 每捕获一段会输出一行 JSON：
