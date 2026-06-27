@@ -1,5 +1,6 @@
 import Foundation
 import AppKit
+import AVFoundation
 
 /// Common language / region shortcuts for `--locale`.
 ///
@@ -130,6 +131,7 @@ enum ListenCmd: Cmd {
             "watch": WatchCmd.self,
             "locales": LocalesCmd.self,
             "auth": AuthCmd.self,
+            "say": SayCmd.self,
         ]
     )
 }
@@ -295,4 +297,211 @@ enum AuthCmd: Cmd {
             ])
         }
     )
+}
+
+/// Text-to-speech using NSSpeechSynthesizer (works in CLI).
+enum SayCmd: Cmd {
+    static let meta = CmdMeta(
+        name: "say",
+        desc: "Text-to-speech using NSSpeechSynthesizer (better than built-in 'say')",
+        opts: localeOptions + [
+            OptMeta(name: "--rate", type: Double.self, desc: "Speech rate (words per minute, default: 200)", `default`: 200.0),
+            OptMeta(name: "--pitch", type: Double.self, desc: "Pitch multiplier (0.5-2.0, default: 1.0)", `default`: 1.0),
+            OptMeta(name: "--volume", type: Double.self, desc: "Volume (0.0-1.0, default: 1.0)", `default`: 1.0),
+            OptMeta(name: "--wait", type: Bool.self, desc: "Wait for speech to finish before exiting (default: true)"),
+            OptMeta(name: "--json", type: Bool.self, desc: "Output JSON (default)"),
+        ],
+        args: [ArgMeta(name: "text", desc: "Text to speak", required: false)],
+        run: { p in
+            let locale = resolveLocale(p)
+            let rate = p.opt("--rate") as Double? ?? 200.0
+            let pitch = p.opt("--pitch") as Double? ?? 1.0
+            let volume = p.opt("--volume") as Double? ?? 1.0
+            let wait = p.opt("--wait") as Bool? ?? true
+
+            // If no text provided, read from stdin
+            var text: String? = p.arg(0)
+            if text == nil || text?.isEmpty == true {
+                text = p.opt("--text") as String?
+            }
+            if text == nil || text?.isEmpty == true {
+                if let stdin = readLine(), !stdin.isEmpty {
+                    text = stdin
+                }
+            }
+
+            guard let text = text, !text.isEmpty else {
+                cmdError("text required")
+            }
+
+            // Auto-detect and speak each segment
+            let segments = detectLanguages(text)
+
+            for segment in segments {
+                let synthesizer = NSSpeechSynthesizer()
+
+                // Set voice first, then rate
+                if let voice = findBestVoice(for: segment.locale) {
+                    synthesizer.setVoice(voice)
+                }
+
+                synthesizer.startSpeaking(segment.text)
+
+                while synthesizer.isSpeaking {
+                    usleep(50_000)
+                }
+            }
+            printJson(["ok": true, "locale": locale, "text": text])
+        }
+    )
+}
+
+/// Auto-detect language segments in text.
+private func detectLanguages(_ text: String) -> [(locale: String, text: String)] {
+    var segments: [(locale: String, text: String)] = []
+    var currentText = ""
+    var currentLang = ""
+
+    for char in text {
+        let lang = detectLanguage(char)
+
+        if lang != currentLang && !currentText.isEmpty {
+            let trimmed = currentText.trimmingCharacters(in: .whitespaces)
+            if !trimmed.isEmpty {
+                segments.append((locale: currentLang, text: trimmed))
+            }
+            currentText = ""
+        }
+        currentText.append(char)
+        currentLang = lang
+    }
+
+    let trimmed = currentText.trimmingCharacters(in: .whitespaces)
+    if !trimmed.isEmpty && currentLang != "" {
+        segments.append((locale: currentLang, text: trimmed))
+    }
+
+    // If only one segment, return as-is
+    if segments.count <= 1 {
+        return [("", text)]
+    }
+
+    return segments
+}
+
+/// Detect language of a single character.
+private func detectLanguage(_ char: Character) -> String {
+    guard let scalar = char.unicodeScalars.first else { return "en-US" }
+    let code = scalar.value
+
+    // Chinese
+    if (0x4E00...0x9FFF).contains(code) || (0x3400...0x4DBF).contains(code) {
+        return "zh-CN"
+    }
+    // Japanese hiragana
+    if (0x3040...0x309F).contains(code) {
+        return "ja-JP"
+    }
+    // Japanese katakana
+    if (0x30A0...0x30FF).contains(code) {
+        return "ja-JP"
+    }
+    // Korean
+    if (0xAC00...0xD7AF).contains(code) || (0x1100...0x11FF).contains(code) {
+        return "ko-KR"
+    }
+    // Cyrillic
+    if (0x0400...0x04FF).contains(code) {
+        return "ru-RU"
+    }
+    // Arabic
+    if (0x0600...0x06FF).contains(code) {
+        return "ar-SA"
+    }
+    // Thai
+    if (0x0E00...0x0E7F).contains(code) {
+        return "th-TH"
+    }
+    // Latin (English/European)
+    if (0x0000...0x024F).contains(code) {
+        return "en-US"
+    }
+    // Default to English
+    return "en-US"
+}
+
+/// Parse mixed-language text using {{locale:text}} syntax.
+private func parseMixedLanguage(_ text: String) -> [(locale: String, text: String)] {
+    var segments: [(locale: String, text: String)] = []
+    var searchStart = text.startIndex
+
+    while searchStart < text.endIndex {
+        // Find {{
+        guard let openStart = text.range(of: "{{", range: searchStart..<text.endIndex)?.lowerBound else {
+            break
+        }
+        // Find : after {{
+        guard let colonPos = text.range(of: ":", range: text.index(after: openStart)..<text.endIndex)?.lowerBound else {
+            break
+        }
+        // Find }}
+        guard let closeEnd = text.range(of: "}}", range: colonPos..<text.endIndex)?.lowerBound else {
+            break
+        }
+
+        let locale = String(text[text.index(after: openStart)..<colonPos])
+        let segmentText = String(text[text.index(after: colonPos)..<closeEnd])
+
+        segments.append((locale: locale, text: segmentText))
+        searchStart = text.index(after: closeEnd)
+    }
+
+    // If no segments found, return the whole text as single segment
+    if segments.isEmpty {
+        return [("", text)]
+    }
+
+    return segments
+}
+
+/// Find the best voice for a locale.
+private func findBestVoice(for locale: String) -> NSSpeechSynthesizer.VoiceName? {
+    let allVoices = NSSpeechSynthesizer.availableVoices
+
+    // Chinese: use Tingting (female)
+    if locale == "zh-CN" {
+        for voice in allVoices {
+            if voice.rawValue == "com.apple.voice.compact.zh-CN.Tingting" {
+                return voice
+            }
+        }
+    }
+
+    // English: use Samantha (system default female)
+    if locale == "en-US" || locale == "en-GB" || locale == "en-AU" {
+        // Try Samantha first (compact, reliable)
+        for voice in allVoices {
+            if voice.rawValue == "com.apple.voice.compact.en-US.Samantha" {
+                return voice
+            }
+        }
+        // Fallback to Flo
+        for voice in allVoices {
+            if voice.rawValue.contains("Flo") && voice.rawValue.contains("en-US") {
+                return voice
+            }
+        }
+    }
+
+    // Japanese: try to find a female voice
+    if locale == "ja-JP" {
+        for voice in allVoices {
+            if voice.rawValue.contains("ja-JP") && (voice.rawValue.contains("O-Ra") || voice.rawValue.contains("Yuki")) {
+                return voice
+            }
+        }
+    }
+
+    // Use default voice for other locales
+    return nil
 }
