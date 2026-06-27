@@ -46,7 +46,7 @@ sudo mv bin/maclisten /usr/local/bin/
 ### eget
 
 ```sh
-x eget use --tag v0.2.1 ljh-sh/maclisten
+x eget use --tag v0.4.0 ljh-sh/maclisten
 ```
 
 ### 从源码构建
