@@ -339,14 +339,10 @@ enum SayCmd: Cmd {
 
             for segment in segments {
                 let synthesizer = NSSpeechSynthesizer()
-
-                // Set voice first, then rate
                 if let voice = findBestVoice(for: segment.locale) {
                     synthesizer.setVoice(voice)
                 }
-
                 synthesizer.startSpeaking(segment.text)
-
                 while synthesizer.isSpeaking {
                     usleep(50_000)
                 }
@@ -493,10 +489,19 @@ private func findBestVoice(for locale: String) -> NSSpeechSynthesizer.VoiceName?
         }
     }
 
-    // Japanese: try to find a female voice
+    // Japanese: use Kyoko (compact female)
     if locale == "ja-JP" {
         for voice in allVoices {
-            if voice.rawValue.contains("ja-JP") && (voice.rawValue.contains("O-Ra") || voice.rawValue.contains("Yuki")) {
+            if voice.rawValue == "com.apple.voice.compact.ja-JP.Kyoko" {
+                return voice
+            }
+        }
+    }
+
+    // Korean: use Yuna (compact female)
+    if locale == "ko-KR" {
+        for voice in allVoices {
+            if voice.rawValue == "com.apple.voice.compact.ko-KR.Yuna" {
                 return voice
             }
         }

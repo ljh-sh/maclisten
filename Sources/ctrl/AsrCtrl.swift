@@ -29,6 +29,9 @@ class AsrCtrl {
         case .authorized:
             return nil
         case .notDetermined:
+            // Will request on first use
+            return nil
+        case .denied:
             return "Speech Recognition permission has not been granted. Run `maclisten auth` and grant access to your terminal in System Settings."
         case .denied:
             return "Speech Recognition permission denied. Enable it in System Settings > Privacy & Security > Speech Recognition."
@@ -46,6 +49,15 @@ class AsrCtrl {
         includeSegments: Bool = false,
         timeout: TimeInterval = 30
     ) async -> [String: Any] {
+        // Request speech recognition auth on first use
+        if SFSpeechRecognizer.authorizationStatus() == .notDetermined {
+            await withCheckedContinuation { continuation in
+                SFSpeechRecognizer.requestAuthorization { _ in
+                    continuation.resume()
+                }
+            }
+        }
+
         if let authErr = Self.speechAuthorizationError() {
             return ["ok": false, "locale": locale, "error": authErr]
         }
