@@ -10,7 +10,6 @@ enum MaclistenRoot: Cmd {
             "watch": WatchCmd.self,
             "locales": LocalesCmd.self,
             "auth": AuthCmd.self,
-            "say": SayCmd.self,
         ],
         run: { p in
             guard let sub = p.arg(0) else {
@@ -32,8 +31,6 @@ enum MaclistenRoot: Cmd {
                 try await LocalesCmd.meta.run?(subArgs)
             case "auth":
                 try await AuthCmd.meta.run?(subArgs)
-            case "say":
-                try await SayCmd.meta.run?(subArgs)
             default:
                 cmdError("unknown subcommand: \(sub)")
             }
