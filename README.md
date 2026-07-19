@@ -2,7 +2,7 @@
 
 [![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/ljh-sh/maclisten/badge)](https://scorecard.dev/)
 [![CI](https://github.com/ljh-sh/maclisten/actions/workflows/ci.yml/badge.svg)](https://github.com/ljh-sh/maclisten/actions/workflows/ci.yml)
-[![Docs](https://img.shields.io/badge/Docs-website-blue.svg)](https://ljh-sh.github.io/maclisten)
+[![Docs](https://img.shields.io/badge/Docs-website-blue.svg)](https://maclisten.ljh.sh)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE.txt)
 
 > Private, lightweight macOS ASR CLI — local speech-to-text with a tiny footprint.
@@ -17,7 +17,7 @@
 - **Continuous listening** — `watch` keeps the microphone open and emits segments/keywords as JSON lines.
 - **Multi-locale `file`** — pass several candidate locales and `file` returns the highest-confidence transcription; ideal for recognizing a recording of unknown language.
 
-Docs: [ljh-sh.github.io/maclisten](https://ljh-sh.github.io/maclisten)
+Docs: [maclisten.ljh.sh](https://maclisten.ljh.sh)
 
 ## For AI agents
 
@@ -152,7 +152,7 @@ Output is JSON by default:
 
 ## FAQ
 
-See [docs/faq.md](docs/faq.md) or the [published FAQ](https://ljh-sh.github.io/maclisten/faq) for answers about permissions, TCC, continuous listening, audio recording, and Siri.
+See [docs/faq.md](docs/faq.md) or the [published FAQ](https://maclisten.ljh.sh/faq) for answers about permissions, TCC, continuous listening, audio recording, and Siri.
 
 ## Design
 
