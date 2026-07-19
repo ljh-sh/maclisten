@@ -2,7 +2,7 @@
 
 [![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/ljh-sh/maclisten/badge)](https://scorecard.dev/)
 [![CI](https://github.com/ljh-sh/maclisten/actions/workflows/ci.yml/badge.svg)](https://github.com/ljh-sh/maclisten/actions/workflows/ci.yml)
-[![Docs](https://img.shields.io/badge/Docs-website-blue.svg)](https://ljh-sh.github.io/maclisten)
+[![Docs](https://img.shields.io/badge/Docs-website-blue.svg)](https://maclisten.ljh.sh)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE.txt)
 
 > 私密、轻量的 macOS ASR CLI —— 本地语音转文字，系统占用极低。
@@ -17,7 +17,7 @@
 - **持续监听** —— `watch` 保持麦克风开启，实时输出分段 / 关键词 JSON 行。
 - **`file` 多语言** —— 给 `file` 传多个候选 locale，自动返回置信度最高的转写；特别适合转写「语言未知」的录音。
 
-文档：[ljh-sh.github.io/maclisten](https://ljh-sh.github.io/maclisten)
+文档：[maclisten.ljh.sh](https://maclisten.ljh.sh)
 
 ## 安装
 
@@ -144,7 +144,7 @@ maclisten file ./clip.m4a --locale zh-CN --locale en-US --no-pick | jq -s 'max_b
 
 ## FAQ
 
-详见 [docs/faq.md](docs/faq.md) 或 [在线 FAQ](https://ljh-sh.github.io/maclisten/faq)。常见问题包括：权限/TCC、`watch` 不捕获、音频格式、Siri 接口等。
+详见 [docs/faq.md](docs/faq.md) 或 [在线 FAQ](https://maclisten.ljh.sh/faq)。常见问题包括：权限/TCC、`watch` 不捕获、音频格式、Siri 接口等。
 
 ## 设计
 
